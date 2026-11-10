@@ -2,11 +2,12 @@ import time
 import os
 from pathlib import Path
 
-from select_roi import select_region
-from fcd import run_fcd
-from renderer import render
-
 import matplotlib.pyplot as plt
+
+from fcd_demodulation.select_roi import select_region
+from fcd_demodulation.fcd import run_fcd
+from fcd_demodulation.renderer import render
+
 
 # constants
 scale = 1 / 0.055
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     # command line arguments
     argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     argparser.add_argument('output_folder', type=Path)
-    argparser.add_argument('reference_image', type=str)
+    argparser.add_argument('definition_folder_path', type=str)
     argparser.add_argument('definition_folder', type=Path)
     argparser.add_argument('-n', '--output_name', type=str, help='Name of output file')
     argparser.add_argument('-l', '--input_length', type=int, default=-1, help='number of files to process')
@@ -46,12 +47,14 @@ if __name__ == "__main__":
 
     # run fcd
     bins=16
-    height_maps = run_fcd(args.reference_image, args.definition_folder, crop_region, scale, drop_diameter, hstar, bins, render_mode, debug=True)
+    height_maps = run_fcd(args.reference_image_path, args.definition_folder_path,
+                          None, scale, hstar, bins, debug=True)
 
     anim = render(height_maps, drop_diameter, scale, render_mode)
 
     image_extensions = (".png", ".jpg", ".jpeg", ".tif", ".tiff") 
     img_path = next((os.path.join(args.definition_folder, f) for f in os.listdir(args.definition_folder) if f.lower().endswith(image_extensions)), None)
+    assert img_path is not None
     ani_name = args.output_name if args.output_name is not None else Path(img_path).stem
     output_path = args.output_folder.joinpath(f'{ani_name}.mp4')
 

@@ -1,11 +1,12 @@
 import numpy as np
+import numpy.typing as npt
 from numpy import array
 from pyfftw.interfaces.scipy_fftpack import fft2, fftshift, fftfreq
 from scipy.ndimage import label
 
-from kspace import pixel2kspace
+from fcd_demodulation.kspace import pixel2kspace
 
-def peaks(img: array, threshold, n_peaks, subpixel=False):
+def peaks(img, threshold, n_peaks, subpixel=False):
     # Step 1: Threshold the image
     blob_img = img > threshold
     blob_img[0, :] = blob_img[-1, :] = False # make the borders false

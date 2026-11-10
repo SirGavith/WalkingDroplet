@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 import sys
 import cv2
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ filename = sys.argv[1]
 
 # read in image
 image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
+assert image is not None
 
 # calculate fourier transform
 img_fft = np.fft.fft2(image)

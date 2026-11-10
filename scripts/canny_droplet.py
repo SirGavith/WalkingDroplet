@@ -35,6 +35,9 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
                     min_distance = distance
                     min_coordinate = (x, y)
 
+        assert min_distance is not None
+        assert min_coordinate is not None
+
         if min_distance < threshold_distance:
             index1, index2 = min_coordinate
             current_contours[index1] = merge_contours(current_contours[index1], current_contours[index2])

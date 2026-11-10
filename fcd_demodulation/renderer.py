@@ -32,6 +32,7 @@ def droplet_center(height, sigma=2.0, grad_thresh=0.2):
 # render height_map in one, two, or three dimensions
 def render(height_maps, drop_diameter, scale, render_mode):
     center_y, center_x = droplet_center(height_maps[0])
+    ani = None
 
     if render_mode == 1:
         fig = plt.figure(figsize=(6, 4))
@@ -62,7 +63,9 @@ def render(height_maps, drop_diameter, scale, render_mode):
             line.set_ydata(height_maps[i][int(center_y), :])
             return line
         
-    if render_mode == 2: # 2d plot
+        ani = animation.FuncAnimation(fig, update, frames=len(height_maps), interval=1, blit=False)
+        
+    elif render_mode == 2: # 2d plot
         fig = plt.figure(figsize=(6, 4))
         fig.set_dpi(100)
         im = plt.imshow(height_maps[0], cmap='ocean')
@@ -75,9 +78,10 @@ def render(height_maps, drop_diameter, scale, render_mode):
         def update(i):
             im.set_array(height_maps[i])
             return im
+        ani = animation.FuncAnimation(fig, update, frames=len(height_maps), interval=1, blit=False)
 
 
-    if render_mode == 3: # 3d plot with matplotlib 
+    elif render_mode == 3: # 3d plot with matplotlib 
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
         r, c = height_maps[0].shape
         X, Y = np.meshgrid(np.arange(c), np.arange(r))
@@ -94,5 +98,7 @@ def render(height_maps, drop_diameter, scale, render_mode):
             # ax.set_zlim(-10, 10)
             return surf
             
-    ani = animation.FuncAnimation(fig, update, frames=len(height_maps), interval=1, blit=False)
+        ani = animation.FuncAnimation(fig, update, frames=len(height_maps), interval=1, blit=False)
+    
+    assert ani is not None
     return ani

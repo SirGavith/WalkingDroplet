@@ -4,7 +4,6 @@ from pathlib import Path
 import os
 
 from skimage.io import imread
-
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 from matplotlib.patches import Rectangle

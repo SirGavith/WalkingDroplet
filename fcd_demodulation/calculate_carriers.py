@@ -3,8 +3,8 @@ from numpy import array
 import numpy as np
 from pyfftw.interfaces.scipy_fftpack import fft2, ifft2
 
-from find_peaks import find_peaks
-from kspace import kvec
+from fcd_demodulation.find_peaks import find_peaks
+from fcd_demodulation.kspace import kvec
 
 # complex conjugate of the inverse fft of the masked i_ref_fft
 def ccsgn(i_ref_fft, mask):

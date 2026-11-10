@@ -2,6 +2,7 @@ output/
 input/
 __pycache__/
 cache/
+.vscode/
 
 # exclude any generated outputs or raw input files
 *.mp4

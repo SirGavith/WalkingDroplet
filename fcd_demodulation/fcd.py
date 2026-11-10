@@ -4,25 +4,26 @@ import os.path
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 from pyfftw.interfaces.scipy_fftpack import fft2, ifft2
 from skimage.io import imread
 from more_itertools import flatten
 from joblib import Memory
-from vidstab import VidStab
+# from vidstab import VidStab
 
-from fft_inverse_gradient import fftinvgrad
-from subplane import subplane
-from  bandpass_filter import filt_band_pass
-from calculate_carriers import Carrier, calculate_carriers
-from renderer import render
+from fcd_demodulation.fft_inverse_gradient import fftinvgrad
+from fcd_demodulation.subplane import subplane
+from fcd_demodulation.bandpass_filter import filt_band_pass
+from fcd_demodulation.calculate_carriers import Carrier, calculate_carriers
 
 # cache for storing fcd results
 cache = Memory(location=Path("cache"), verbose=0)  # no console spam
 
 # initialize video stabilizer
-stabilizer = VidStab()
+# stabilizer = VidStab()
 
-def run_fcd(ref_img_path, def_folder_path, crop_region, scale, hstar, bins=None, input_length=-1, debug=False, progress_cb=None, status_cb=None):
+def run_fcd(ref_img_path, def_folder_path, crop_region, scale,
+            hstar, bins=None, input_length=-1, debug=False, progress_cb=None, status_cb=None):
     """
     Wrapper for the fcd function that handles the image preperation.
 
@@ -39,7 +40,7 @@ def run_fcd(ref_img_path, def_folder_path, crop_region, scale, hstar, bins=None,
         status_cb (func): Callback function for updating GUI status label
 
     Returns:
-        animation: The rendered matplotlib animation.
+        height_maps: The rendered matplotlib animation.
     """
     import glob
 
@@ -57,8 +58,8 @@ def run_fcd(ref_img_path, def_folder_path, crop_region, scale, hstar, bins=None,
     files = list(sorted(flatten((glob.glob(x) if '*' in x else [x]) for x in filenames)))
 
     # crop reference image to crop region
-    x1, x2, y1, y2 = crop_region
-    if x1 != 0 and x2 != 0 and y1 != 0 and y2 != 0:
+    x1, x2, y1, y2 = crop_region if crop_region is not None else (0,-1,0,-1)
+    if crop_region is not None:
         i_ref = i_ref[y1:y2, x1:x2]
 
     if debug: print(f'processing reference image...', end='')
@@ -74,13 +75,14 @@ def run_fcd(ref_img_path, def_folder_path, crop_region, scale, hstar, bins=None,
 
         i_def = imread(file, as_gray=True)
 
-        i_def_stab = stabilizer.stabilize_frame(input_frame=i_def,
-                                                   smoothing_window=30) # stabilizer will output black frames until smoothing window is completed
-                
+        i_def_stab = i_def #stabilizer.stabilize_frame(input_frame=i_def,
+        #                                           smoothing_window=30) # stabilizer will output black frames until smoothing window is completed
+        assert i_def_stab is not None
+        
         if np.sum(i_def_stab) == 0: continue # skip black frames
                 
         # Crop deformed image
-        if x1 != 0 and x2 != 0 and y1 != 0 and y2 != 0:
+        if crop_region is not None:
             i_def_stab = i_def_stab[y1:y2, x1:x2]
 
         t0 = time.time()
@@ -90,7 +92,8 @@ def run_fcd(ref_img_path, def_folder_path, crop_region, scale, hstar, bins=None,
 
         if debug: print(f'done in {time.time() - t0:.2f}s\n')
  
-        height_maps.append(height_field_filtered[20:-20, 20:-20])
+        # height_maps.append(height_field_filtered[20:-20, 20:-20])
+        height_maps.append(height_field_filtered)
 
     if debug: print(f'height map processing done\n')
 

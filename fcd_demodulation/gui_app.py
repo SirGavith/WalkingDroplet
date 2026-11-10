@@ -3,9 +3,8 @@ import os
 from pathlib import Path
 import json
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import pyqtSignal, QThread
+from PyQt5.QtWidgets import QGridLayout, QLabel, QLineEdit, QPushButton, QDialog, QMessageBox, QWidget, QVBoxLayout, QMainWindow, QButtonGroup, QHBoxLayout, QFileDialog, QApplication, QProgressBar, QRadioButton
 
 import matplotlib
 matplotlib.use("Qt5Agg")    
@@ -13,9 +12,9 @@ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 
-from fcd import run_fcd
-from select_roi import roi_filename_for, get_first_image
-from renderer import render
+from fcd_demodulation.fcd import run_fcd
+from fcd_demodulation.select_roi import roi_filename_for, get_first_image
+from fcd_demodulation.renderer import render
 
 class FCDWorker(QThread):
     progress = pyqtSignal(int)
@@ -261,18 +260,24 @@ class FCDWindow(QMainWindow):
     def select_reference_image(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Reference Image", "", "Images (*.png *.jpg *.tif)")
         if file_path:
-            self.ref_image_path = file_path
-            self.ref_label.setText(f"Reference Image: {os.path.basename(file_path)}")
+            self.set_reference_image(file_path)
+        
+    def set_reference_image(self, file_path: str):
+        self.ref_image_path = file_path
+        self.ref_label.setText(f"Reference Image: {os.path.basename(file_path)}")
 
     def select_definition_folder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder with Definition Images")
         if folder_path:
-            self.def_folder_path = folder_path
-            self.def_label.setText(f"Definition Folder: {os.path.basename(folder_path)}")
-            self.advanced_settings['max_bins'] = len([f for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))])
-            roi_path = roi_filename_for(Path(self.def_folder_path))
-            if roi_path and os.path.exists(roi_path):
-                self.load_crop_button.setEnabled(True)
+            self.set_definition_folder(folder_path)
+            
+    def set_definition_folder(self, folder_path: str):
+        self.def_folder_path = folder_path
+        self.def_label.setText(f"Definition Folder: {os.path.basename(folder_path)}")
+        self.advanced_settings['max_bins'] = len([f for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))])
+        roi_path = roi_filename_for(Path(self.def_folder_path))
+        if roi_path and os.path.exists(roi_path):
+            self.load_crop_button.setEnabled(True)
 
     def set_render_mode(self, mode):
         self.render_mode = mode
@@ -293,8 +298,8 @@ class FCDWindow(QMainWindow):
         fig, ax = plt.subplots()
         ax.imshow(img, cmap='gray')
 
-        rect_selector = RectangleSelector(ax, useblit=True,
-                                        button=[1], # left mouse button,
+        rect_selector = RectangleSelector(ax, lambda _,__: None, useblit=True,
+                                        # button=[1], # left mouse button,
                                         minspanx=5, minspany=5, spancoords='pixels', interactive=True, state_modifier_keys=dict(square=''))
         
         # close window and submit if enter key is pressed
@@ -369,5 +374,8 @@ class FCDWindow(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     gui = FCDWindow()
+    gui.set_reference_image('C:/Users/gavin/Documents/Code/physicsthesis/checkerboard_sim/out/test1/reference.png')
+    gui.set_definition_folder('C:/Users/gavin/Documents/Code/physicsthesis/checkerboard_sim/out/test1/observed')
+    gui.advanced_settings['bins'] = 1
     gui.show()
     sys.exit(app.exec_())
